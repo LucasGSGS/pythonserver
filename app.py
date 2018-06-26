@@ -22,7 +22,8 @@ import importlib
 import multiprocessing
 import sys
 import FINAL_config_hour_of_day as config
-import os
+import requests
+
 
 
 
@@ -56,10 +57,36 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
       cheapest_path=networkx.shortest_path(G, source=origin,target=destination, weight="cost")
       quickest_path=networkx.shortest_path(G, source=origin,target=destination, weight="time")
 
-      get_path_and_center(G, origin,destination,alpha,"cost")
+      # get_path_and_center(G, origin,destination,alpha,"cost")
+      #
+      # print("cheapest path: "+str(cheapest_path))
+      # print("quickest path: "+str(quickest_path))
 
-      print("cheapest path: "+str(cheapest_path))
-      print("quickest path: "+str(quickest_path))
+
+      r = networkx.shortest_path(G, origin,destination,"cost")
+      latlng_list = []
+      latlng_center = []
+      latitude_total = 0
+      longitude_total = 0
+      for i in r:
+          temp_list = []
+          temp_list.append(G_raw.node[i]['x'])
+          temp_list.append(G_raw.node[i]['y'])
+          latlng_list.append(temp_list)
+      for i in latlng_list:
+          latitude_total = latitude_total + i[0]
+          longitude_total = longitude_total + i[1]
+      avg_lat = latitude_total/len(latlng_list)
+      avg_lng = longitude_total/len(latlng_list)
+      latlng_center.append(avg_lat)
+      latlng_center.append(avg_lng)
+      data = {'coordinates': latlng_list, 'center': latlng_center, 'alpha': alpha}
+
+
+
+
+
+
 
       #query = urlsplit(url).query
      #params = parse_qs(query)
@@ -69,10 +96,16 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
       self.send_response(200)
 
       outData={}
-      outData["origin"]=origin
-      outData["destination"]=destination
-      outData["quickest_path"]=cheapest_path
-      outData["cheapest_path"]=quickest_path
+      outData["coordinates"]=latlng_list
+      outData["center"]=latlng_center
+      outData["alpha"]=alpha
+      # outData["cheapest_path"]=quickest_path
+
+      # outData={}
+      # outData["origin"]=origin
+      # outData["destination"]=destination
+      # outData["quickest_path"]=cheapest_path
+      # outData["cheapest_path"]=quickest_path
       print("outData: "+str(outData))
 
 
@@ -101,28 +134,38 @@ def run():
   print('running server...')
   httpd.serve_forever()
 
-def get_path_and_center(Graph, origin_node_id,dest_node_id,alpha,weight):
-  r = networkx.shortest_path(Graph, origin_node_id,dest_node_id, weight)
-  latlng_list = []
-  latlng_center = []
-  latitude_total = 0
-  longitude_total = 0
-  for i in r:
-      temp_list = []
-      temp_list.append(G_raw.node[i]['x'])
-      temp_list.append(G_raw.node[i]['y'])
-      latlng_list.append(temp_list)
-  for i in latlng_list:
-      latitude_total = latitude_total + i[0]
-      longitude_total = longitude_total + i[1]
-  avg_lat = latitude_total/len(latlng_list)
-  avg_lng = longitude_total/len(latlng_list)
-  latlng_center.append(avg_lat)
-  latlng_center.append(avg_lng)
-  data = {'coordinates': latlng_list, 'center': latlng_center, 'alpha': alpha}
+# def get_path_and_center(Graph, origin_node_id,dest_node_id,alpha,weight):
+#   r = networkx.shortest_path(Graph, origin_node_id,dest_node_id, weight)
+#   latlng_list = []
+#   latlng_center = []
+#   latitude_total = 0
+#   longitude_total = 0
+#   for i in r:
+#       temp_list = []
+#       temp_list.append(G_raw.node[i]['x'])
+#       temp_list.append(G_raw.node[i]['y'])
+#       latlng_list.append(temp_list)
+#   for i in latlng_list:
+#       latitude_total = latitude_total + i[0]
+#       longitude_total = longitude_total + i[1]
+#   avg_lat = latitude_total/len(latlng_list)
+#   avg_lng = longitude_total/len(latlng_list)
+#   latlng_center.append(avg_lat)
+#   latlng_center.append(avg_lng)
+#   data = {'coordinates': latlng_list, 'center': latlng_center, 'alpha': alpha}
   # To write to a file:
-  with open("/Users/shuogong/VisionZeroWebApp/output.json", "w") as f:
-      json.dump(data, f)
+  # with open("/Users/shuogong/VisionZeroWebApp/output.json", "w") as f:
+  #     json.dump(data, f)
+  # # Send headers
+  # self.send_header('Content-type','text/html')
+  # self.end_headers()
+  #
+  # # Send message back to client
+  # message = json.dumps(data)
+  # print("message: "+str(message))
+  # #self.wfile.write("<html><body><h1>hi!</h1></body></html>")
+  # # Write content as utf-8 data
+  # self.wfile.write(bytes(message, "utf8"))
 
 if __name__ == '__main__':
   global G
@@ -162,8 +205,7 @@ if __name__ == '__main__':
 
   # Server settings
   # Choose port 8080, for port 80, which is normally used for a http server, you need root access
-  server_address = ('127.0.0.1', os.environ.PORT or 8081)
+  server_address = ('127.0.0.1', 8081)
   httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
   print('running server...')
-  print(os.environ.PORT)
   httpd.serve_forever()
