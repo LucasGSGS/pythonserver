@@ -8,7 +8,7 @@ if ON_HEROKU:
     # get the heroku port
     PORT = int(os.environ.get("PORT", 17995))  # as per OP comments default is 17995
 else:
-    PORT = 3000
+    PORT = 8081
 
 class myHandler(BaseHTTPRequestHandler):
     def do_GET(self):
