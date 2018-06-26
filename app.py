@@ -22,7 +22,7 @@ import importlib
 import multiprocessing
 import sys
 import FINAL_config_hour_of_day as config
-
+import os
 
 
 
@@ -162,7 +162,8 @@ if __name__ == '__main__':
 
   # Server settings
   # Choose port 8080, for port 80, which is normally used for a http server, you need root access
-  server_address = ('127.0.0.1', 8081)
+  server_address = ('127.0.0.1', os.environ.PORT or 8081)
   httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
   print('running server...')
+  print(os.environ.PORT)
   httpd.serve_forever()
